@@ -5,25 +5,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.19.0'
           channel: 'stable'
 
-      # هذا السطر هو "السحر" اللي راح يحل المشكلة
-      # راح يخلي السيرفر يصنع مجلد الـ android والملفات الناقصة تلقائياً
       - name: Create Native Files
         run: flutter create . --platforms android
 
       - run: flutter pub get
+
+      # السطر الجديد والمهم لتوليد الأيقونة 🚀
+      - name: Generate Icons
+        run: dart run flutter_launcher_icons
       
-      # هنا لغيت الـ split علمود يطلع لك ملف واحد APK سهل التحميل
       - name: Build APK
         run: flutter build apk --release
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Zizo-Prank-APK
+          name: Zizo-Radar-With-Icon
           path: build/app/outputs/flutter-apk/app-release.apk
