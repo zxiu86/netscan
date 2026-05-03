@@ -1,43 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:network_info_plus/network_info_plus.dart';
-import 'dart:async';
+import 'dart:io';
 
-void main() => runApp(MaterialApp(
-  home: RadarScreen(),
-  debugShowCheckedModeBanner: false,
-));
+void main() => runApp(MaterialApp(home: RealRadar(), debugShowCheckedModeBanner: false));
 
-class RadarScreen extends StatefulWidget {
+class RealRadar extends StatefulWidget {
   @override
-  _RadarScreenState createState() => _RadarScreenState();
+  _RealRadarState createState() => _RealRadarState();
 }
 
-class _RadarScreenState extends State<RadarScreen> {
-  String myIP = "جاري جلب الـ IP...";
-  List<String> devices = [];
+class _RealRadarState extends State<RealRadar> {
+  List<String> activeDevices = [];
   bool isScanning = false;
+  String status = "اضغط للبدء بالفحص الحقيقي";
 
-  Future<void> startScan() async {
-    setState(() { 
-      isScanning = true; 
-      devices.clear(); 
-    });
-    
+  Future<void> scanNetwork() async {
+    setState(() { isScanning = true; activeDevices.clear(); status = "جاري فحص الأجهزة المتصلة..."; });
+
     final info = NetworkInfo();
-    var hostIP = await info.getWifiIP(); 
-    setState(() { myIP = hostIP ?? "غير متصل بالواي فاي"; });
-
+    var hostIP = await info.getWifiIP();
+    
     if (hostIP != null) {
       final String subnet = hostIP.substring(0, hostIP.lastIndexOf('.'));
       
-      // فحص أول 30 جهاز للتجربة السريعة
-      for (int i = 1; i <= 30; i++) {
+      // راح نفحص أول 50 عنوان بالشبكة
+      for (int i = 1; i <= 50; i++) {
         final String target = "$subnet.$i";
-        await Future.delayed(Duration(milliseconds: 150));
-        setState(() { 
-          devices.add("جهاز متصل: $target"); 
-        });
+        try {
+          // نحاول نفتح اتصال سريع (بورت 80 أو 443) للتأكد من وجود الجهاز
+          final socket = await Socket.connect(target, 80, timeout: Duration(milliseconds: 100));
+          setState(() { activeDevices.add("جهاز نشط: $target"); });
+          socket.destroy();
+        } catch (e) {
+          // إذا ما رد الجهاز، معناها ماكو شي هنا
+        }
       }
+      setState(() { status = "اكتمل الفحص. وجدنا ${activeDevices.length} أجهزة"; });
     }
     setState(() { isScanning = false; });
   }
@@ -45,38 +43,26 @@ class _RadarScreenState extends State<RadarScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("رادار زيزو 📡"),
-        backgroundColor: Colors.blueGrey[900],
-      ),
+      appBar: AppBar(title: Text("رادار زيزو الحقيقي 🛡️"), backgroundColor: Colors.indigo),
       body: Column(
         children: [
-          Container(
-            padding: EdgeInsets.all(20),
-            width: double.infinity,
-            color: Colors.blueGrey[800],
-            child: Text(
-              "عنوانك: $myIP",
-              style: TextStyle(color: Colors.greenAccent, fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ),
-          if (isScanning) LinearProgressIndicator(color: Colors.greenAccent),
+          Container(padding: EdgeInsets.all(15), child: Text(status, style: TextStyle(fontWeight: FontWeight.bold))),
+          if (isScanning) LinearProgressIndicator(),
           Expanded(
             child: ListView.builder(
-              itemCount: devices.length,
+              itemCount: activeDevices.length,
               itemBuilder: (context, index) => ListTile(
-                leading: Icon(Icons.router, color: Colors.blue),
-                title: Text(devices[index]),
-                trailing: Icon(Icons.check_circle, color: Colors.green, size: 16),
+                leading: Icon(Icons.wifi_tethering, color: Colors.green),
+                title: Text(activeDevices[index]),
+                subtitle: Text("متصل الآن بالراوتر"),
               ),
             ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: isScanning ? null : startScan,
-        backgroundColor: Colors.blueGrey[900],
-        child: Icon(isScanning ? Icons.hourglass_empty : Icons.search, color: Colors.white),
+        onPressed: isScanning ? null : scanNetwork,
+        child: Icon(Icons.radar),
       ),
     );
   }
