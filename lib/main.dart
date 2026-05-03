@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:network_info_plus/network_info_plus.dart';
-import 'dart:io';
+import 'package:dart_ping/dart_ping.dart';
+import 'dart:async';
 
-void main() => runApp(MaterialApp(home: RealRadar(), debugShowCheckedModeBanner: false));
+void main() => runApp(MaterialApp(home: ZizoRadar(), debugShowCheckedModeBanner: false));
 
-class RealRadar extends StatefulWidget {
+class ZizoRadar extends StatefulWidget {
   @override
-  _RealRadarState createState() => _RealRadarState();
+  _ZizoRadarState createState() => _ZizoRadarState();
 }
 
-class _RealRadarState extends State<RealRadar> {
+class _ZizoRadarState extends State<ZizoRadar> {
   List<String> activeDevices = [];
   bool isScanning = false;
-  String status = "اضغط للبدء بالفحص الحقيقي";
+  String status = "اضغط للبدء بالفحص بالسونار 📡";
 
-  Future<void> scanNetwork() async {
-    setState(() { isScanning = true; activeDevices.clear(); status = "جاري فحص الأجهزة المتصلة..."; });
+  Future<void> startZizoScan() async {
+    setState(() { isScanning = true; activeDevices.clear(); status = "جاري إرسال إشارات Ping..."; });
 
     final info = NetworkInfo();
     var hostIP = await info.getWifiIP();
@@ -23,44 +24,57 @@ class _RealRadarState extends State<RealRadar> {
     if (hostIP != null) {
       final String subnet = hostIP.substring(0, hostIP.lastIndexOf('.'));
       
-      for (int i = 1; i <= 50; i++) {
+      // راح نفحص أول 30 جهاز كبداية علمود السرعة
+      for (int i = 1; i <= 30; i++) {
         final String target = "$subnet.$i";
-        try {
-          final socket = await Socket.connect(target, 80, timeout: Duration(milliseconds: 100));
-          setState(() { activeDevices.add("جهاز نشط: $target"); });
-          socket.destroy();
-        } catch (e) {
-          // لم يتم العثور على جهاز
-        }
+        final ping = Ping(target, count: 1, timeout: 1); // نرسل إشارة واحدة فقط
+
+        ping.stream.listen((event) {
+          if (event.response != null && event.response!.ip != null) {
+            if (!activeDevices.contains(target)) {
+              setState(() { activeDevices.add("جهاز نشط: $target ✅"); });
+            }
+          }
+        });
       }
-      setState(() { status = "اكتمل الفحص. وجدنا ${activeDevices.length} أجهزة"; });
     }
-    setState(() { isScanning = false; });
+    
+    // ننتظر شوية ونطفي اللودينج
+    await Future.delayed(Duration(seconds: 5));
+    setState(() { isScanning = false; status = "اكتمل الفحص بنجاح!"; });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("رادار زيزو الحقيقي 🛡️"), backgroundColor: Colors.indigo),
+      backgroundColor: Colors.black,
+      appBar: AppBar(title: Text("رادار زيزو المحترف"), backgroundColor: Colors.redAccent),
       body: Column(
         children: [
-          Container(padding: EdgeInsets.all(15), child: Text(status, style: TextStyle(fontWeight: FontWeight.bold))),
-          if (isScanning) LinearProgressIndicator(),
+          Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: Text(status, style: TextStyle(color: Colors.white, fontSize: 16)),
+          ),
+          if (isScanning) LinearProgressIndicator(color: Colors.redAccent),
           Expanded(
             child: ListView.builder(
               itemCount: activeDevices.length,
-              itemBuilder: (context, index) => ListTile(
-                leading: Icon(Icons.wifi_tethering, color: Colors.green),
-                title: Text(activeDevices[index]),
-                subtitle: Text("متصل الآن بالراوتر"),
+              itemBuilder: (context, index) => Card(
+                color: Colors.grey[900],
+                child: ListTile(
+                  leading: Icon(Icons.radar, color: Colors.redAccent),
+                  title: Text(activeDevices[index], style: TextStyle(color: Colors.white)),
+                  subtitle: Text("متصل ويستجيب للإشارة", style: TextStyle(color: Colors.grey)),
+                ),
               ),
             ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: isScanning ? null : scanNetwork,
-        child: Icon(Icons.radar),
+        onPressed: isScanning ? null : startZizoScan,
+        backgroundColor: Colors.redAccent,
+        child: Icon(Icons.search),
       ),
     );
   }
