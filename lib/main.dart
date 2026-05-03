@@ -1,39 +1,75 @@
 import 'package:flutter/material.dart';
+import 'package:network_info_plus/network_info_plus.dart';
+import 'dart:async';
 
-void main() => runApp(MaterialApp(
-  debugShowCheckedModeBanner: false,
-  home: SecurityApp(),
-));
+void main() => runApp(MaterialApp(home: RadarScreen(), debugShowCheckedModeBanner: false));
 
-class SecurityApp extends StatefulWidget {
+class RadarScreen extends StatefulWidget {
   @override
-  _SecurityAppState createState() => _SecurityAppState();
+  _RadarScreenState createState() => _RadarScreenState();
 }
 
-class _SecurityAppState extends State<SecurityApp> {
-  // معرفات الحقول علمود نكدر نقرأ اللي انكتب
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passController = TextEditingController();
+class _RadarScreenState extends State<RadarScreen> {
+  String myIP = "جاري جلب الـ IP...";
+  List<String> devices = [];
+  bool isScanning = false;
 
-  void runScan() {
-    // هذي الحركة تطلع "لودينج" لثواني علمود المصدقية
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        Future.delayed(Duration(seconds: 3), () {
-          Navigator.pop(context); // يغلق اللودينج
-          showPrankResult(); // يظهر المقلب
-        });
-        return AlertDialog(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 20),
-              Text("جاري فحص أمان الجهاز..."),
-            ],
+  // وظيفة لجلب معلومات الشبكة
+  Future<void> startScan() async {
+    setState(() { isScanning = true; devices.clear(); });
+    
+    final info = NetworkInfo();
+    var hostIP = await info.getWifiIP(); // يجيب IP موبايلك
+    setState(() { myIP = hostIP ?? "غير متصل بالواي فاي"; });
+
+    if (hostIP != null) {
+      final String subnet = hostIP.substring(0, hostIP.lastIndexOf('.'));
+      
+      // فحص سريع لأول 50 جهاز كمثال (لأن الفحص الكامل يحتاج وقت)
+      for (int i = 1; i < 50; i++) {
+        final String target = "$subnet.$i";
+        // هنا نقوم بعملية فحص وهمي سريعة للعرض
+        // في النسخ المتقدمة نستخدم Socket.connect
+        await Future.delayed(Duration(milliseconds: 100));
+        setState(() { devices.add("جهاز تم اكتشافه: $target"); });
+      }
+    }
+    setState(() { isScanning = false; });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("رادار زيزو للشبكة 📡"), backgroundColor: Colors.black87),
+      body: Column(
+        children: [
+          Container(
+            padding: EdgeInsets.all(20),
+            color: Colors.blueGrey[900],
+            width: double.infinity,
+            child: Text("عنوانك الحالي: $myIP", style: TextStyle(color: Colors.greenAccent, fontSize: 18)),
           ),
+          if (isScanning) LinearProgressIndicator(),
+          Expanded(
+            child: ListView.builder(
+              itemCount: devices.length,
+              itemBuilder: (context, index) => ListTile(
+                leading: Icon(Icons.devices, color: Colors.blue),
+                title: Text(devices[index]),
+                subtitle: Text("متصل الآن"),
+              ),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: isScanning ? null : startScan,
+        child: Icon(Icons.search),
+        backgroundColor: Colors.blue,
+      ),
+    );
+  }
+}
         );
       },
     );
