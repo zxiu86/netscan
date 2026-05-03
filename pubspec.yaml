@@ -9,7 +9,7 @@ dependencies:
   flutter:
     sdk: flutter
   network_info_plus: ^5.0.0
-  dart_ping: ^0.1.0 # المكتبة الجديدة للصيد الحقيقي
+  dart_ping: ^9.0.1 # المكتبة الجديدة للصيد الحقيقي
 
 dev_dependencies:
   flutter_test:
