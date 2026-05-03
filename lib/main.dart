@@ -67,3 +67,36 @@ class _RealRadarState extends State<RealRadar> {
     );
   }
 }
+      }
+      setState(() { status = "اكتمل الفحص. وجدنا ${activeDevices.length} أجهزة"; });
+    }
+    setState(() { isScanning = false; });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("رادار زيزو الحقيقي 🛡️"), backgroundColor: Colors.indigo),
+      body: Column(
+        children: [
+          Container(padding: EdgeInsets.all(15), child: Text(status, style: TextStyle(fontWeight: FontWeight.bold))),
+          if (isScanning) LinearProgressIndicator(),
+          Expanded(
+            child: ListView.builder(
+              itemCount: activeDevices.length,
+              itemBuilder: (context, index) => ListTile(
+                leading: Icon(Icons.wifi_tethering, color: Colors.green),
+                title: Text(activeDevices[index]),
+                subtitle: Text("متصل الآن بالراوتر"),
+              ),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: isScanning ? null : scanNetwork,
+        child: Icon(Icons.radar),
+      ),
+    );
+  }
+}
