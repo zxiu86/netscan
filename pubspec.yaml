@@ -1,11 +1,15 @@
-name: scanner
-description: A security scan prank app.
+name: zizo_radar
+description: Network Scanner App
 publish_to: 'none'
 version: 1.0.0+1
 environment:
   sdk: '>=3.0.0 <4.0.0'
+
 dependencies:
   flutter:
     sdk: flutter
+  network_info_plus: ^5.0.0 # لجلب معلومات الواي فاي
+  http: ^1.1.0 # لإرسال طلبات فحص للأجهزة
+
 flutter:
   uses-material-design: true
