@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as https;
+import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -31,7 +31,10 @@ class _ScronHomeState extends State<ScronHome> {
 
   Future<void> injectData() async {
     try {
-     final response = await http.get(  Uri.parse(rawUrl),  headers: {"Accept": "application/json"},);
+     final response = await http.get(
+  Uri.parse(rawUrl),
+  headers: {"Accept": "application/json"}, // حتى يفهم إنك تريد بيانات صافية
+);
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
