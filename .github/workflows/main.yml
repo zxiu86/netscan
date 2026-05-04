@@ -1,10 +1,15 @@
 name: scron Build System 🚀
 
-on: [push, workflow_dispatch]
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    
+    # تعريف البيئة لتجنب تحذيرات Node.js 24 المستقبيلة 😎
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -24,54 +29,28 @@ jobs:
           flutter-version: '3.19.0'
           channel: 'stable'
 
-      # 1. توليد الملفات
+      # بناء ملفات الأندرويد من جديد مع اسم الحزمة الصغير
       - name: Fix Native Files
         run: flutter create --project-name=scron . --platforms android
 
-      # 2. حقن المانيفست بأيقونة "نظام" افتراضية لتجنب خطأ الـ Resource
-      - name: Force Internet Permission
+      # السطر العبقري لحقن إذن الإنترنت في ملف المانيفست 💉
+      - name: Inject Internet Permission
         run: |
-          cat <<EOF > android/app/src/main/AndroidManifest.xml
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-              <uses-permission android:name="android.permission.INTERNET" />
-              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-              <application
-                  android:label="scron"
-                  android:name="\${applicationName}"
-                  android:icon="@android:drawable/sym_def_app_icon">
-                  <activity
-                      android:name=".MainActivity"
-                      android:exported="true"
-                      android:launchMode="singleTop"
-                      android:theme="@style/LaunchTheme"
-                      android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|screenLayout|density|uiMode"
-                      android:hardwareAccelerated="true"
-                      android:windowSoftInputMode="adjustResize">
-                      <meta-data
-                        android:name="io.flutter.embedding.android.NormalTheme"
-                        android:resource="@style/NormalTheme"
-                        />
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN"/>
-                          <category android:name="android.intent.category.LAUNCHER"/>
-                      </intent-filter>
-                  </activity>
-                  <meta-data
-                      android:name="flutterEmbedding"
-                      android:value="2" />
-              </application>
-          </manifest>
-          EOF
-
+          sed -i '/<application/i \    <uses-permission android:name="android.permission.INTERNET" />' android/app/src/main/AndroidManifest.xml
       - name: Get Dependencies
         run: flutter pub get
       
-      # 3. البناء بدون توليد أيقونات حالياً (حتى نضمن وصول الإنترنت أولاً)
+      # توليد الأيقونات (تأكد من وجود صورة باسم scan.png في المجلد الرئيسي)
+      - name: Generate Icons
+        run: dart run flutter_launcher_icons
+      
+      # بناء الـ APK وتقسيمه لتقليل الحجم (arm64 هو اللي يهمك)
       - name: Build APK
         run: flutter build apk --release --split-per-abi
 
+      # رفع الملفات الناتجة (الـ 3 نسخ)
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Scron-Final-APKs
+          name: Scron-APKs-Pack
           path: build/app/outputs/flutter-apk/*.apk
