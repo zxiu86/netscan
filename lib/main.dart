@@ -21,7 +21,7 @@ class _ScronHomeState extends State<ScronHome> {
   List apps = [];
   bool isLoading = true;
   // حط رابط الـ Raw الخاص بك هنا 👇
-  final String rawUrl = "https://raw.githubusercontent.com/zxiu86/scon-data/main/data.json";
+  final String rawUrl = "https://zxiu86.github.io/scron-data/";
 
   @override
   void initState() {
