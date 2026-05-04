@@ -49,8 +49,8 @@ class _ScronHomeState extends State<ScronHome> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("SCRON HUB", style: TextStyle(letterSpacing: 3, fontWeight: FontWeight.black, color: Colors.cyanAccent)),
+            appBar: AppBar(
+        title: const Text("SCRON HUB", style: TextStyle(letterSpacing: 3, fontWeight: FontWeight.w900, color: Colors.cyanAccent)),
         centerTitle: true,
         backgroundColor: Colors.black,
         elevation: 10,
@@ -59,6 +59,7 @@ class _ScronHomeState extends State<ScronHome> {
           IconButton(icon: const Icon(Icons.refresh, color: Colors.cyanAccent), onPressed: injectData)
         ],
       ),
+
       // إضافة السحب للتحديث 🔄
       body: RefreshIndicator(
         onRefresh: injectData,
