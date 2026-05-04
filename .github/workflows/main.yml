@@ -1,4 +1,4 @@
-name: Scron Build System 🚀
+name: scron Build System 🚀
 
 on: [push, workflow_dispatch]
 
@@ -20,11 +20,11 @@ jobs:
           flutter-version: '3.19.0'
           channel: 'stable'
 
-      # السطر المهم جداً لضمان وجود ملفات الأندرويد v2 ✅
       - name: Fix Native Files
-        run: flutter create . --platforms android
+        run: flutter create --project-name=scron . --platforms android
 
-      - run: flutter pub get
+      - name: Get Dependencies
+        run: flutter pub get
       
       - name: Generate Icons
         run: dart run flutter_launcher_icons
