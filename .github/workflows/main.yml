@@ -24,11 +24,11 @@ jobs:
           flutter-version: '3.19.0'
           channel: 'stable'
 
-      # 1. توليد الملفات الأساسية
+      # 1. توليد الملفات
       - name: Fix Native Files
         run: flutter create --project-name=scron . --platforms android
 
-      # 2. الحل الجذري: مسح ملف المانيفست القديم وصناعة واحد جديد بـ "إذن الإنترنت" 💉
+      # 2. حقن المانيفست بأيقونة "نظام" افتراضية لتجنب خطأ الـ Resource
       - name: Force Internet Permission
         run: |
           cat <<EOF > android/app/src/main/AndroidManifest.xml
@@ -38,7 +38,7 @@ jobs:
               <application
                   android:label="scron"
                   android:name="\${applicationName}"
-                  android:icon="@mipmap/launcher_icon">
+                  android:icon="@android:drawable/sym_def_app_icon">
                   <activity
                       android:name=".MainActivity"
                       android:exported="true"
@@ -66,6 +66,7 @@ jobs:
       - name: Get Dependencies
         run: flutter pub get
       
+      # 3. البناء بدون توليد أيقونات حالياً (حتى نضمن وصول الإنترنت أولاً)
       - name: Build APK
         run: flutter build apk --release --split-per-abi
 
@@ -73,25 +74,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Scron-Final-APKs
-          path: build/app/outputs/flutter-apk/*.apk
-      - name: Inject Internet Permission
-        run: |
-          sed -i '/<application/i \    <uses-permission android:name="android.permission.INTERNET" />' android/app/src/main/AndroidManifest.xml
-
-      - name: Get Dependencies
-        run: flutter pub get
-      
-      # توليد الأيقونات (تأكد من وجود صورة باسم scan.png في المجلد الرئيسي)
-      - name: Generate Icons
-        run: dart run flutter_launcher_icons
-      
-      # بناء الـ APK وتقسيمه لتقليل الحجم (arm64 هو اللي يهمك)
-      - name: Build APK
-        run: flutter build apk --release --split-per-abi
-
-      # رفع الملفات الناتجة (الـ 3 نسخ)
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: Scron-APKs-Pack
           path: build/app/outputs/flutter-apk/*.apk
