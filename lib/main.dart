@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:http/http.dart' as https;
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -31,7 +31,7 @@ class _ScronHomeState extends State<ScronHome> {
 
   Future<void> injectData() async {
     try {
-      final response = await http.get(Uri.parse(rawUrl));
+     final response = await http.get(Uri.parse(rawUrl), headers: {"Accept": "application/json"},);;
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
@@ -57,7 +57,7 @@ class _ScronHomeState extends State<ScronHome> {
       body: isLoading 
           ? Center(child: CircularProgressIndicator(color: Colors.blueAccent))
           : apps.isEmpty 
-              ? Center(child: Text("لا توجد بيانات.. تأكد من الحقنة 💉", style: TextStyle(color: Colors.grey)))
+              ? Center(child: Text("...لا توجد بيانات", style: TextStyle(color: Colors.grey)))
               : ListView.builder(
                   padding: EdgeInsets.all(15),
                   itemCount: apps.length,
