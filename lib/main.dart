@@ -43,11 +43,17 @@ class _ScronHomeState extends State<ScronHome> {
           isLoading = false;
         });
       }
-    } catch (e) {
-      setState(() { isLoading = false; });
-      print("Error: $e");
+        } catch (e) {
+      setState(() { 
+        isLoading = false; 
+        // بدل ما تكون فارغة، خليها تعرض الخطأ
+        apps = []; 
+        print("Detailed Error: $e");
+      });
+      // اختياري: طلع تنبيه للمستخدم بالخطأ
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
     }
-  }
+
 
   @override
   Widget build(BuildContext context) {
