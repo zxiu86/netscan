@@ -20,7 +20,9 @@ class ScronHome extends StatefulWidget {
 class _ScronHomeState extends State<ScronHome> {
   List apps = [];
   bool isLoading = true;
-  // حط رابط الـ Raw الخاص بك هنا 👇
+  String status = "جاري جلب الحقنة... 💉";
+  
+  // الرابط الخام (تأكد من صحته)
   final String rawUrl = "https://raw.githubusercontent.com/zxiu86/scron-data/main/data.json";
 
   @override
@@ -31,35 +33,36 @@ class _ScronHomeState extends State<ScronHome> {
 
   Future<void> injectData() async {
     try {
-     final response = await http.get(
-  Uri.parse(rawUrl),
-  headers: {"Accept": "application/json"}, // حتى يفهم إنك تريد بيانات صافية
-);
+      final response = await http.get(
+        Uri.parse(rawUrl),
+        headers: {"Accept": "application/json"},
+      );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(utf8.decode(response.bodyBytes));
         setState(() {
           apps = data['apps'];
           isLoading = false;
         });
+      } else {
+        setState(() {
+          isLoading = false;
+          status = "خطأ في السيرفر: ${response.statusCode}";
+        });
       }
-        } catch (e) {
-      setState(() { 
-        isLoading = false; 
-        // بدل ما تكون فارغة، خليها تعرض الخطأ
-        apps = []; 
-        print("Detailed Error: $e");
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+        status = "فشل الاتصال: $e";
       });
-      // اختياري: طلع تنبيه للمستخدم بالخطأ
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
     }
-
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("SCRON", style: TextStyle(letterSpacing: 2, fontWeight: FontWeight.bold, color: Colors.blueAccent)),
+        title: const Text("SCRON", style: TextStyle(letterSpacing: 2, fontWeight: FontWeight.bold, color: Colors.blueAccent)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -67,52 +70,57 @@ class _ScronHomeState extends State<ScronHome> {
       body: isLoading 
           ? Center(child: CircularProgressIndicator(color: Colors.blueAccent))
           : apps.isEmpty 
-              ? Center(child: Text("...لا توجد بيانات", style: TextStyle(color: Colors.grey)))
+              ? Center(child: Text(status, style: const TextStyle(color: Colors.grey)))
               : ListView.builder(
-                  padding: EdgeInsets.all(15),
+                  padding: const EdgeInsets.all(15),
                   itemCount: apps.length,
                   itemBuilder: (context, index) => AppCard(app: apps[index]),
                 ),
     );
   }
-}
+} // إغلاق كلاس _ScronHomeState بشكل صحيح هنا ✅
 
 class AppCard extends StatelessWidget {
   final dynamic app;
-  AppCard({required this.app});
+  const AppCard({Key? key, required this.app}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(bottom: 15),
+      margin: const EdgeInsets.only(bottom: 15),
       decoration: BoxDecoration(
-        color: Color(0xFF161616),
+        color: const Color(0xFF161616),
         borderRadius: BorderRadius.circular(15),
         border: Border.all(color: Colors.blueAccent.withOpacity(0.1)),
       ),
       child: ListTile(
-        contentPadding: EdgeInsets.all(12),
+        contentPadding: const EdgeInsets.all(12),
         leading: ClipRRect(
           borderRadius: BorderRadius.circular(12),
           child: CachedNetworkImage(
-            imageUrl: app['iconUrl'],
+            imageUrl: app['iconUrl'] ?? '',
             width: 55, height: 55,
             placeholder: (context, url) => Container(color: Colors.black12),
-            errorWidget: (context, url, error) => Icon(Icons.apps, color: Colors.blueAccent),
+            errorWidget: (context, url, error) => const Icon(Icons.apps, color: Colors.blueAccent),
           ),
         ),
-        title: Text(app['name'], style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text(app['name'] ?? 'بدون اسم', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(app['category'], style: TextStyle(color: Colors.blueAccent, fontSize: 12)),
-            SizedBox(height: 5),
-            Text(app['description'], maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.grey, fontSize: 13)),
+            Text(app['category'] ?? 'عام', style: const TextStyle(color: Colors.blueAccent, fontSize: 12)),
+            const SizedBox(height: 5),
+            Text(app['description'] ?? '', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.grey, fontSize: 13)),
           ],
         ),
         trailing: IconButton(
-          icon: Icon(Icons.download_for_offline, color: Colors.blueAccent, size: 30),
-          onPressed: () => launchUrl(Uri.parse(app['downloadUrl'])),
+          icon: const Icon(Icons.download_for_offline, color: Colors.blueAccent, size: 30),
+          onPressed: () async {
+            final url = Uri.parse(app['downloadUrl'] ?? '');
+            if (await canLaunchUrl(url)) {
+              await launchUrl(url, mode: LaunchMode.externalApplication);
+            }
+          },
         ),
       ),
     );
