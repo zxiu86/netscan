@@ -1,27 +1,27 @@
-name: Scron
-description: Network Scanner App
+name: scron
+description: Your Ultimate Cloud Injector App
 publish_to: 'none'
-version: 1.3.0+1
+version: 1.0.0+1
+
 environment:
   sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
-  network_info_plus: ^5.0.0
-  dart_ping: ^9.0.1 # المكتبة الجديدة للصيد الحقيقي
+  http: ^1.1.0                # بطل عملية الحقن 💉
+  cached_network_image: ^3.3.0 # لعرض صور التطبيقات بسرعة
+  url_launcher: ^6.2.1        # لفتح روابط التحميل
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  # المكتبة اللي راح تسوي الأيقونة
   flutter_launcher_icons: ^0.13.1
 
-# إعدادات الأيقونة
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: false
-  image_path: "scan.png" # لأنك حطيتها بالمجلد الرئيسي مباشرة
+  image_path: "scan.png" # تذكر تغيرها لصورة سكرون مستقبلاً
   min_sdk_android: 21
 
 flutter:
