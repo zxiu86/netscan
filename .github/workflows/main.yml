@@ -1,15 +1,10 @@
 name: scron Build System 🚀
 
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+on: [push, workflow_dispatch]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
-    # تعريف البيئة لتجنب تحذيرات Node.js 24 المستقبيلة 😎
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -29,11 +24,56 @@ jobs:
           flutter-version: '3.19.0'
           channel: 'stable'
 
-      # بناء ملفات الأندرويد من جديد مع اسم الحزمة الصغير
+      # 1. توليد الملفات الأساسية
       - name: Fix Native Files
         run: flutter create --project-name=scron . --platforms android
 
-      # السطر العبقري لحقن إذن الإنترنت في ملف المانيفست 💉
+      # 2. الحل الجذري: مسح ملف المانيفست القديم وصناعة واحد جديد بـ "إذن الإنترنت" 💉
+      - name: Force Internet Permission
+        run: |
+          cat <<EOF > android/app/src/main/AndroidManifest.xml
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+              <application
+                  android:label="scron"
+                  android:name="\${applicationName}"
+                  android:icon="@mipmap/launcher_icon">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:launchMode="singleTop"
+                      android:theme="@style/LaunchTheme"
+                      android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|screenLayout|density|uiMode"
+                      android:hardwareAccelerated="true"
+                      android:windowSoftInputMode="adjustResize">
+                      <meta-data
+                        android:name="io.flutter.embedding.android.NormalTheme"
+                        android:resource="@style/NormalTheme"
+                        />
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                      </intent-filter>
+                  </activity>
+                  <meta-data
+                      android:name="flutterEmbedding"
+                      android:value="2" />
+              </application>
+          </manifest>
+          EOF
+
+      - name: Get Dependencies
+        run: flutter pub get
+      
+      - name: Build APK
+        run: flutter build apk --release --split-per-abi
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Scron-Final-APKs
+          path: build/app/outputs/flutter-apk/*.apk
       - name: Inject Internet Permission
         run: |
           sed -i '/<application/i \    <uses-permission android:name="android.permission.INTERNET" />' android/app/src/main/AndroidManifest.xml
