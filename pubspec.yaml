@@ -1,7 +1,7 @@
 name: scron
 description: Your Ultimate Cloud Injector App
 publish_to: 'none'
-version: 8.1.1 +1
+version: 8.1.1+1
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
