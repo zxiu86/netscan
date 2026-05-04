@@ -31,7 +31,8 @@ class _ScronHomeState extends State<ScronHome> {
 
   Future<void> injectData() async {
     try {
-     final response = await http.get(Uri.parse(rawUrl), headers: {"Accept": "application/json"},);;
+     final response = await http.get(  Uri.parse(rawUrl),  headers: {"Accept": "application/json"},);
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
